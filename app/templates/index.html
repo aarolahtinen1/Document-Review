@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contract Review</title>
+<style>
+  :root { --fg:#1d2330; --muted:#5b6475; --border:#d5d9e0; --accent:#2457d6; --bg:#f6f7f9; --card:#fff; --err:#c62828; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
+  main { max-width: 680px; margin: 48px auto; padding: 0 16px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  p.lead { margin: 0 0 24px; color: var(--muted); }
+  form { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+  label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .drop { border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; }
+  .or { text-align: center; color: var(--muted); margin: 16px 0; font-size: 14px; }
+  textarea { width: 100%; min-height: 160px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 14px; }
+  .settings { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 20px; }
+  .settings label { font-size: 14px; margin-bottom: 6px; }
+  select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 14px; background: #fff; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  @media (max-width: 520px) { .settings { grid-template-columns: 1fr; } }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .status { color: var(--muted); font-size: 14px; }
+  .error { color: var(--err); margin-top: 12px; font-size: 14px; white-space: pre-wrap; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Contract Review</h1>
+  <p class="lead">Upload a contract to get a PDF that labels its key terms, risk flags, obligations and dates.</p>
+
+  <form id="f">
+    <label for="file">Contract file (.pdf or .docx)</label>
+    <div class="drop"><input id="file" name="file" type="file" accept=".pdf,.docx"></div>
+    <div class="or">— or paste the text —</div>
+    <textarea id="text" name="text" placeholder="Paste contract text here…"></textarea>
+    <div class="settings">
+      <div>
+        <label for="model">Model</label>
+        <select id="model" name="model"></select>
+      </div>
+      <div>
+        <label for="effort">Effort</label>
+        <select id="effort" name="effort"></select>
+      </div>
+    </div>
+    <div class="hint">Higher effort is more thorough but slower and costs more. Defaults come from <code>.env</code>.</div>
+    <div class="row">
+      <button id="go" type="submit">Review contract</button>
+      <span id="status" class="status"></span>
+    </div>
+    <div id="err" class="error"></div>
+  </form>
+</main>
+<script>
+const form = document.getElementById("f"), btn = document.getElementById("go"),
+      statusEl = document.getElementById("status"), errEl = document.getElementById("err");
+
+// Fill the model/effort dropdowns, preselecting the .env defaults.
+fetch("/options").then(r => r.json()).then(opts => {
+  const modelSel = document.getElementById("model"), effortSel = document.getElementById("effort");
+  const models = [...opts.models];
+  if (!models.some(m => m.id === opts.default_model)) {
+    models.push({ id: opts.default_model, label: `${opts.default_model} (from .env)` });
+  }
+  for (const m of models) modelSel.add(new Option(m.label, m.id, false, m.id === opts.default_model));
+  for (const e of opts.efforts) effortSel.add(new Option(e, e, false, e === opts.default_effort));
+}).catch(() => { errEl.textContent = "Couldn't load model options; the .env defaults will be used."; });
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errEl.textContent = "";
+  const fd = new FormData(form);
+  const file = fd.get("file");
+  if ((!file || !file.size) && !fd.get("text").trim()) {
+    errEl.textContent = "Choose a file or paste some text.";
+    return;
+  }
+  btn.disabled = true;
+  statusEl.innerHTML = '<span class="spinner"></span>Reviewing… this usually takes 30–90 seconds.';
+  try {
+    const res = await fetch("/review", { method: "POST", body: fd });
+    if (!res.ok) {
+      let msg = `Request failed (${res.status}).`;
+      try { msg = (await res.json()).detail || msg; } catch {}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") || "";
+    const name = (cd.match(/filename="([^"]+)"/) || [])[1] || "contract-review.pdf";
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    statusEl.textContent = "Done. Your report has downloaded.";
+  } catch (err) {
+    statusEl.textContent = "";
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
