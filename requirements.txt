@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+anthropic
+pydantic
+python-docx
+jinja2
+weasyprint
+python-dotenv
+pypdf
