@@ -1,0 +1,40 @@
+SERVICES AGREEMENT
+
+This Services Agreement ("Agreement") is made on 1 March 2026 between Northwind Cloud Pty Ltd (ABN 00 000 000 000) ("Supplier") and Acme Pty Ltd ("Customer").
+
+1. SERVICES
+1.1 Supplier will provide the managed hosting services described in Schedule 1 ("Services").
+1.2 Supplier may modify the Services or these terms at any time by posting an updated version on its website. Continued use of the Services constitutes acceptance.
+
+2. TERM AND RENEWAL
+2.1 This Agreement commences on 1 April 2026 and continues for an initial term of 24 months.
+2.2 This Agreement automatically renews for successive 12-month periods unless Customer gives written notice of non-renewal at least 90 days before the end of the then-current term.
+
+3. FEES AND PAYMENT
+3.1 Customer will pay a monthly fee of AUD 18,500 (excluding GST).
+3.2 Supplier will invoice monthly in advance. Invoices are payable within 14 days of the invoice date.
+3.3 Supplier may increase the fees once per year by giving 30 days' notice. Late payments attract interest at 2% per month.
+
+4. SERVICE LEVELS
+4.1 Supplier will use reasonable endeavours to achieve 99.5% monthly availability. Service credits are Customer's sole and exclusive remedy for any failure to meet service levels.
+
+5. CONFIDENTIALITY
+5.1 Each party must keep the other party's Confidential Information confidential, except where disclosure is required by law.
+
+6. INTELLECTUAL PROPERTY
+6.1 All intellectual property created by Supplier in connection with the Services, including any customisations developed using Customer data, vests in Supplier.
+
+7. LIABILITY AND INDEMNITY
+7.1 Supplier's total liability under this Agreement is limited to the fees paid by Customer in the one month preceding the claim.
+7.2 Customer indemnifies Supplier against all losses, costs and claims arising from Customer's use of the Services, without limitation.
+
+8. TERMINATION
+8.1 Supplier may terminate this Agreement for convenience on 30 days' written notice.
+8.2 Either party may terminate immediately if the other party commits a material breach that is not remedied within 30 days of notice.
+8.3 On termination, Supplier will make Customer data available for download for 7 days, after which it may be deleted.
+
+9. GENERAL
+9.1 This Agreement is governed by the laws of Singapore and the parties submit to the exclusive jurisdiction of the courts of Singapore.
+9.2 Supplier may assign this Agreement without Customer's consent.
+
+Signed for and on behalf of Northwind Cloud Pty Ltd and Acme Pty Ltd.
