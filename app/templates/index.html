@@ -5,41 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Contract Review</title>
 <style>
-  :root { --fg:#1d2330; --muted:#5b6475; --border:#d5d9e0; --accent:#2457d6; --bg:#f6f7f9; --card:#fff; --err:#c62828; }
+  :root {
+    --fg: #1d2330; --muted: #5b6475; --border: #d5d9e0; --accent: #2457d6; --bg: #f6f7f9; --card: #fff; --err: #c62828;
+    --high: #c62828; --high-bg: rgba(198, 40, 40, .14);
+    --medium: #c77700; --medium-bg: rgba(224, 138, 0, .18);
+    --low: #4f6f8c; --low-bg: rgba(92, 124, 153, .16);
+    --del-bg: #fdecec; --del-fg: #8e1f1f; --ins-bg: #e8f6ec; --ins-fg: #17602f;
+  }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
-  main { max-width: 680px; margin: 48px auto; padding: 0 16px; }
+  button { font: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Upload view ---------- */
+  #upload main { max-width: 680px; margin: 48px auto; padding: 0 16px; }
   h1 { margin: 0 0 4px; font-size: 26px; }
   p.lead { margin: 0 0 24px; color: var(--muted); }
   form { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
   label { display: block; font-weight: 600; margin-bottom: 8px; }
   .drop { border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; }
-  .or { text-align: center; color: var(--muted); margin: 16px 0; font-size: 14px; }
-  textarea { width: 100%; min-height: 160px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 14px; }
   .settings { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 20px; }
   .settings label { font-size: 14px; margin-bottom: 6px; }
   select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 14px; background: #fff; }
   .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
-  @media (max-width: 520px) { .settings { grid-template-columns: 1fr; } }
   .row { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
-  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
-  button:disabled { opacity: .6; cursor: progress; }
+  .primary { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; }
+  .primary:disabled { opacity: .6; cursor: progress; }
   .status { color: var(--muted); font-size: 14px; }
   .error { color: var(--err); margin-top: 12px; font-size: 14px; white-space: pre-wrap; }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Review view ---------- */
+  #review { display: flex; flex-direction: column; height: 100vh; }
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .topbar .title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; }
+  .topbar .meta { color: var(--muted); font-size: 13px; }
+  .topbar .counts { display: flex; gap: 8px; font-size: 13px; }
+  .topbar .spacer { flex: 1; }
+  .secondary { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+  .secondary:hover { border-color: var(--muted); }
+
+  .panes { flex: 1; display: grid; grid-template-columns: 400px 1fr; min-height: 0; }
+  .clauses, .doc { min-width: 0; overflow-wrap: anywhere; }
+  .clauses { overflow-y: auto; border-right: 1px solid var(--border); padding: 12px; background: var(--bg); }
+  .doc { overflow-y: auto; padding: 32px 24px 80px; background: #eceef2; }
+  .paper { max-width: 780px; margin: 0 auto; background: #fff; padding: 48px 56px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.08); font-family: Georgia, "Times New Roman", serif; font-size: 15px; line-height: 1.6; }
+  .paper p { margin: 0 0 12px; border-radius: 3px; transition: background-color .3s; }
+  .paper p.flash { background: rgba(36, 87, 214, .10); }
+
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #fff; }
+  .chip.high { background: var(--high); } .chip.medium { background: var(--medium); } .chip.low { background: var(--low); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+  .card.high { border-left-color: var(--high); } .card.medium { border-left-color: var(--medium); } .card.low { border-left-color: var(--low); }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .card.selected { box-shadow: 0 0 0 2px var(--accent); }
+  .card h3 { margin: 0 0 8px; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+  .redline { font-size: 13px; line-height: 1.5; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+  .redline .del, .redline .ins { padding: 8px 10px; white-space: pre-wrap; }
+  .redline .del { background: var(--del-bg); color: var(--del-fg); text-decoration: line-through; text-decoration-color: rgba(142,31,31,.5); }
+  .redline .ins { background: var(--ins-bg); color: var(--ins-fg); }
+  .redline .lbl { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; text-decoration: none; opacity: .75; margin-bottom: 2px; }
+  .card .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .card .copy { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; white-space: nowrap; margin-left: auto; }
+  .card .copy:hover { border-color: var(--muted); }
+  .card .note { font-size: 12px; color: var(--muted); font-style: italic; flex: 1; margin-right: 8px; }
+  .empty { color: var(--muted); text-align: center; padding: 32px 12px; }
+
+  mark { color: inherit; padding: 1px 0; border-radius: 2px; cursor: pointer; border-bottom: 2px solid; transition: box-shadow .2s; }
+  mark.high { background: var(--high-bg); border-color: var(--high); }
+  mark.medium { background: var(--medium-bg); border-color: var(--medium); }
+  mark.low { background: var(--low-bg); border-color: var(--low); }
+  mark.selected { box-shadow: 0 0 0 2px var(--accent); }
+  mark.pulse { animation: pulse 1.2s ease-out; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 6px rgba(36,87,214,.35); } 100% { box-shadow: 0 0 0 2px var(--accent); } }
+
+  @media (max-width: 800px) {
+    #review { height: auto; min-height: 100vh; }
+    .panes { grid-template-columns: 1fr; }
+    .clauses { border-right: 0; border-bottom: 1px solid var(--border); max-height: 50vh; }
+    .doc { padding: 16px; }
+    .paper { padding: 24px 20px; }
+    .settings { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
+
+<!-- ===== Upload view ===== -->
+<section id="upload">
 <main>
   <h1>Contract Review</h1>
-  <p class="lead">Upload a contract to get a PDF that labels its key terms, risk flags, obligations and dates.</p>
+  <p class="lead">Upload a contract as a PDF or Word document. The AI flags problematic clauses and suggests replacement wording.</p>
 
   <form id="f">
-    <label for="file">Contract file (.pdf or .docx)</label>
-    <div class="drop"><input id="file" name="file" type="file" accept=".pdf,.docx"></div>
-    <div class="or">— or paste the text —</div>
-    <textarea id="text" name="text" placeholder="Paste contract text here…"></textarea>
+    <label for="file">Contract (.pdf or .docx)</label>
+    <div class="drop"><input id="file" name="file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></div>
+    <div class="hint">Scanned PDFs aren't supported. The PDF needs selectable text.</div>
     <div class="settings">
       <div>
         <label for="model">Model</label>
@@ -52,19 +116,38 @@
     </div>
     <div class="hint">Higher effort is more thorough but slower and costs more. Defaults come from <code>.env</code>.</div>
     <div class="row">
-      <button id="go" type="submit">Review contract</button>
+      <button id="go" class="primary" type="submit">Review contract</button>
       <span id="status" class="status"></span>
     </div>
     <div id="err" class="error"></div>
   </form>
 </main>
+</section>
+
+<!-- ===== Review view ===== -->
+<section id="review" hidden>
+  <div class="topbar">
+    <span class="title" id="r-title"></span>
+    <span class="meta" id="r-meta"></span>
+    <span class="counts" id="r-counts"></span>
+    <span class="spacer"></span>
+    <button class="secondary" id="again" type="button">Review another</button>
+  </div>
+  <div class="panes">
+    <aside class="clauses" id="r-clauses" aria-label="Flagged clauses"></aside>
+    <div class="doc" id="r-doc"><article class="paper" id="r-paper"></article></div>
+  </div>
+</section>
+
 <script>
-const form = document.getElementById("f"), btn = document.getElementById("go"),
-      statusEl = document.getElementById("status"), errEl = document.getElementById("err");
+const $ = (id) => document.getElementById(id);
+const form = $("f"), btn = $("go"), statusEl = $("status"), errEl = $("err");
+
+// ---------- Upload ----------
 
 // Fill the model/effort dropdowns, preselecting the .env defaults.
 fetch("/options").then(r => r.json()).then(opts => {
-  const modelSel = document.getElementById("model"), effortSel = document.getElementById("effort");
+  const modelSel = $("model"), effortSel = $("effort");
   const models = [...opts.models];
   if (!models.some(m => m.id === opts.default_model)) {
     models.push({ id: opts.default_model, label: `${opts.default_model} (from .env)` });
@@ -78,12 +161,11 @@ form.addEventListener("submit", async (e) => {
   errEl.textContent = "";
   const fd = new FormData(form);
   const file = fd.get("file");
-  if ((!file || !file.size) && !fd.get("text").trim()) {
-    errEl.textContent = "Choose a file or paste some text.";
-    return;
-  }
+  if (!file || !file.size) { errEl.textContent = "Choose a PDF or Word document to review."; return; }
+  if (!/\.(pdf|docx)$/i.test(file.name)) { errEl.textContent = "Only PDF or Word documents (.pdf, .docx) are accepted."; return; }
+
   btn.disabled = true;
-  statusEl.innerHTML = '<span class="spinner"></span>Reviewing… this usually takes 30–90 seconds.';
+  statusEl.innerHTML = '<span class="spinner"></span>Reviewing… usually 30–90 seconds, longer for big contracts.';
   try {
     const res = await fetch("/review", { method: "POST", body: fd });
     if (!res.ok) {
@@ -91,14 +173,8 @@ form.addEventListener("submit", async (e) => {
       try { msg = (await res.json()).detail || msg; } catch {}
       throw new Error(msg);
     }
-    const blob = await res.blob();
-    const cd = res.headers.get("Content-Disposition") || "";
-    const name = (cd.match(/filename="([^"]+)"/) || [])[1] || "contract-review.pdf";
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement("a"), { href: url, download: name });
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    statusEl.textContent = "Done. Your report has downloaded.";
+    renderReview(await res.json());
+    statusEl.textContent = "";
   } catch (err) {
     statusEl.textContent = "";
     errEl.textContent = err.message;
@@ -106,6 +182,152 @@ form.addEventListener("submit", async (e) => {
     btn.disabled = false;
   }
 });
+
+$("again").addEventListener("click", () => {
+  $("review").hidden = true;
+  $("upload").hidden = false;
+  form.reset();
+  // reset() clears selects to their first option; restore the defaults.
+  fetch("/options").then(r => r.json()).then(o => { $("model").value = o.default_model; $("effort").value = o.default_effort; });
+});
+
+// ---------- Review ----------
+// All document and model text is inserted via textContent (never innerHTML).
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function renderReview(data) {
+  $("r-title").textContent = data.source_name;
+  $("r-meta").textContent = `${data.model} · effort ${data.effort}`;
+
+  const counts = { high: 0, medium: 0, low: 0 };
+  data.clauses.forEach(c => counts[c.severity]++);
+  const countsEl = $("r-counts");
+  countsEl.replaceChildren();
+  for (const s of ["high", "medium", "low"]) {
+    const span = el("span");
+    span.append(el("span", `chip ${s}`, s), ` ${counts[s]}`);
+    countsEl.append(span);
+  }
+
+  renderDocument(data.paragraphs, data.clauses);
+  renderClauses(data.clauses);
+
+  $("upload").hidden = true;
+  $("review").hidden = false;
+  $("r-doc").scrollTop = 0;
+  $("r-clauses").scrollTop = 0;
+}
+
+function renderDocument(paragraphs, clauses) {
+  // Group located clauses by paragraph; within a paragraph, highlight non-overlapping spans.
+  const byPara = new Map();
+  for (const c of clauses) {
+    if (!c.location) continue;
+    const list = byPara.get(c.location.paragraph) || [];
+    list.push(c);
+    byPara.set(c.location.paragraph, list);
+  }
+
+  const paper = $("r-paper");
+  paper.replaceChildren();
+  paragraphs.forEach((text, i) => {
+    const p = el("p");
+    p.id = `para-${i}`;
+    const spans = (byPara.get(i) || []).slice().sort((a, b) => a.location.start - b.location.start);
+    let pos = 0;
+    for (const c of spans) {
+      const { start, end } = c.location;
+      if (start < pos) continue; // overlaps an earlier highlight; the card still jumps to this paragraph
+      p.append(text.slice(pos, start));
+      const m = el("mark", c.severity, text.slice(start, end));
+      m.dataset.id = c.id;
+      m.title = c.issue;
+      m.addEventListener("click", () => select(c.id, "doc"));
+      p.append(m);
+      pos = end;
+    }
+    p.append(text.slice(pos));
+    paper.append(p);
+  });
+}
+
+function renderClauses(clauses) {
+  const list = $("r-clauses");
+  list.replaceChildren();
+  if (!clauses.length) {
+    list.append(el("div", "empty", "No problematic clauses found."));
+    return;
+  }
+  for (const c of clauses) {
+    const card = el("div", `card ${c.severity}`);
+    card.id = `card-${c.id}`;
+    card.tabIndex = 0;
+    if (c.location) card.dataset.para = c.location.paragraph;
+
+    const h = el("h3");
+    h.append(el("span", `chip ${c.severity}`, c.severity), el("span", "", c.issue));
+    card.append(h);
+
+    const red = el("div", "redline");
+    const del = el("div", "del"); del.append(el("span", "lbl", "Current"), c.quote);
+    const ins = el("div", "ins"); ins.append(el("span", "lbl", "Suggested"), c.suggested_edit);
+    red.append(del, ins);
+    card.append(red);
+
+    const actions = el("div", "actions");
+    actions.append(el("span", "note", c.location ? "" : "Couldn't find this text in the document."));
+    const copy = el("button", "copy", "Copy suggested edit");
+    copy.type = "button";
+    copy.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      await copyText(c.suggested_edit);
+      copy.textContent = "Copied ✓";
+      setTimeout(() => (copy.textContent = "Copy suggested edit"), 1500);
+    });
+    actions.append(copy);
+    card.append(actions);
+
+    card.addEventListener("click", () => select(c.id, "card"));
+    card.addEventListener("keydown", (ev) => { if (ev.key === "Enter") select(c.id, "card"); });
+    list.append(card);
+  }
+}
+
+function select(id, from) {
+  document.querySelectorAll(".card.selected, mark.selected").forEach(n => n.classList.remove("selected"));
+  const card = $(`card-${id}`);
+  const mark = document.querySelector(`mark[data-id="${id}"]`);
+  card?.classList.add("selected");
+
+  if (mark) {
+    mark.classList.add("selected");
+    if (from === "card") {
+      mark.scrollIntoView({ behavior: "smooth", block: "center" });
+      mark.classList.remove("pulse"); void mark.offsetWidth; mark.classList.add("pulse");
+    }
+  } else if (from === "card") {
+    // Overlapping highlight: jump to the paragraph instead.
+    const paraIdx = card?.dataset.para;
+    const para = paraIdx !== undefined ? $(`para-${paraIdx}`) : null;
+    if (para) {
+      para.scrollIntoView({ behavior: "smooth", block: "center" });
+      para.classList.add("flash"); setTimeout(() => para.classList.remove("flash"), 1200);
+    }
+  }
+  if (from === "doc") card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return; } catch {}
+  const ta = el("textarea"); ta.value = text; document.body.append(ta); ta.select();
+  document.execCommand("copy"); ta.remove();
+}
 </script>
 </body>
 </html>
